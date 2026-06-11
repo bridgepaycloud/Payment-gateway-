@@ -1046,12 +1046,17 @@ async function doRegister(e) {
   }
   setStep(1,'done');
 
+  // Extract token from the session returned by signUp (may be null if email confirm required)
+  var _signUpToken = (data.session && data.session.access_token) ? data.session.access_token : '';
+
   // ── STEP 2: Save business profile via backend ──
   setStep(2,'active');
   try {
+    var profileHeaders = { 'Content-Type': 'application/json' };
+    if (_signUpToken) profileHeaders['Authorization'] = 'Bearer ' + _signUpToken;
     var resp = await fetch('/api/auth/profile', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: profileHeaders,
       body: JSON.stringify({
         user_id:         data.user.id,
         email:           email,
@@ -1080,9 +1085,11 @@ async function doRegister(e) {
   var currencyMap = { ZM:'ZMW', ZW:'USD', NA:'NAD', BW:'BWP' };
   var countryFullName = countryNames[country] || country;
   try {
+    var walletHeaders = { 'Content-Type': 'application/json' };
+    if (_signUpToken) walletHeaders['Authorization'] = 'Bearer ' + _signUpToken;
     await fetch('/api/wallets/init', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: walletHeaders,
       body: JSON.stringify({ user_id: data.user.id, currency: currencyMap[country] || 'ZMW', country: countryFullName })
     });
     setStep(3,'done');
@@ -1160,7 +1167,8 @@ async function submitGoogleDetails() {
   }});
 
   await fetch('/api/auth/profile', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
     body: JSON.stringify({
       user_id: u.id, email: u.email, full_name: u.user_metadata.full_name || u.user_metadata.name,
       business_name: biz, business_sector: sector, country: countryNames[country] || country,
