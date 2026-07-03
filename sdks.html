@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SDKs & Tools — NexaPay</title>
+  <meta name="description" content="Download NexaPay SDKs for Node.js, Python, PHP, and more. Postman collection and Insomnia workspace included." />
+  <link rel="icon" href="nexapay.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f4f5f9; color: #1a1f2e; line-height: 1.6; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; }
+
+    :root {
+      --brand: #3b5bdb; --brand-dark: #2f4ac0; --brand-light: #e8edff; --brand-muted: #748ffc;
+      --surface: #ffffff; --bg: #f4f5f9; --bg-dark: #edf0f7;
+      --text: #1a1f2e; --text-muted: #6b7280; --text-light: #9ca3af;
+      --border: #e5e7eb; --shadow: 0 4px 16px rgba(0,0,0,.08); --radius: 16px; --radius-sm: 10px;
+      --nav-h: 68px; --transition: .3s cubic-bezier(.4,0,.2,1);
+      --code-bg: #0f1117; --code-border: #30363d;
+    }
+    html.dark { --surface: #1a1f2e; --bg: #0f1117; --bg-dark: #161b22; --text: #e6edf3; --text-muted: #8b949e; --border: #30363d; --brand-light: rgba(59,91,219,.22); }
+    html.dark body { background: var(--bg); color: var(--text); }
+    html.dark nav { background: rgba(15,17,23,.92); border-bottom-color: rgba(255,255,255,.07); }
+    html.dark nav.scrolled { background: rgba(15,17,23,.98); }
+    html.dark .drawer { background: #161b22; }
+    html.dark footer { background: #161b22; }
+    html.dark .sdk-card { background: var(--surface); }
+    html.dark .tool-card { background: var(--surface); }
+    html.dark .code-block { background: var(--code-bg); border-color: var(--code-border); }
+
+    /* NAV */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: var(--nav-h); background: rgba(244,245,249,.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,.6); display: flex; align-items: center; padding: 0 1.5rem; transition: background var(--transition), box-shadow var(--transition); }
+    nav.scrolled { background: rgba(244,245,249,.97); box-shadow: 0 1px 20px rgba(0,0,0,.08); }
+    .nav-inner { width: 100%; max-width: 1140px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo-link { display: flex; align-items: center; gap: .6rem; }
+    .logo-text { font-size: 1.18rem; font-weight: 900; letter-spacing: -.7px; background: linear-gradient(135deg,#4338ca 0%,#6d28d9 55%,#a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .logo-pay-accent { font-weight: 900; font-style: italic; }
+    .logo-sub { font-size: .62rem; font-weight: 500; color: var(--text-muted); letter-spacing: .4px; text-transform: uppercase; margin-top: -2px; -webkit-text-fill-color: var(--text-muted); }
+    .nav-right { display: flex; align-items: center; gap: .4rem; }
+    .dark-toggle { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 1.5px solid var(--border); color: var(--text-muted); cursor: pointer; transition: all var(--transition); }
+    .dark-toggle:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+    .dark-toggle svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .dark-toggle .icon-sun { display: block; } .dark-toggle .icon-moon { display: none; }
+    html.dark .dark-toggle .icon-sun { display: none; } html.dark .dark-toggle .icon-moon { display: block; }
+    .hamburger { width: 38px; height: 38px; border-radius: 9px; background: var(--surface); border: 1.5px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; transition: all var(--transition); }
+    .hamburger span { display: block; width: 16px; height: 2px; background: var(--text-muted); border-radius: 2px; transition: all var(--transition); }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* DRAWER */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 999; opacity: 0; pointer-events: none; transition: opacity var(--transition); }
+    .overlay.visible { opacity: 1; pointer-events: all; }
+    .drawer { position: fixed; top: 0; right: 0; height: 100dvh; width: min(320px, 88vw); background: var(--surface); z-index: 1001; transform: translateX(100%); transition: transform var(--transition); padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { display: flex; align-items: center; justify-content: space-between; }
+    .drawer-close { width: 34px; height: 34px; border-radius: 8px; background: var(--bg); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--text-muted); cursor: pointer; }
+    .drawer-nav { list-style: none; display: flex; flex-direction: column; gap: .25rem; }
+    .drawer-nav a { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; border-radius: 10px; font-size: .93rem; font-weight: 500; color: var(--text); transition: all var(--transition); }
+    .drawer-nav a:hover, .drawer-nav a.active { background: var(--brand-light); color: var(--brand); }
+    .nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+    .nav-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .drawer-divider { height: 1px; background: var(--border); }
+    .drawer-actions { display: flex; flex-direction: column; gap: .6rem; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .65rem 1.25rem; border-radius: 10px; font-size: .9rem; font-weight: 600; transition: all var(--transition); }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { background: var(--brand-dark); }
+    .btn-outline { border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+    .btn-full { width: 100%; }
+
+    /* PAGE */
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: calc(var(--nav-h) + 2.5rem) 1.5rem 5rem; }
+    .page-hero { text-align: center; margin-bottom: 3.5rem; }
+    .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: var(--brand-light); color: var(--brand); font-size: .8rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: .35rem .9rem; border-radius: 50px; margin-bottom: 1rem; }
+    .hero-badge svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .page-hero h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800; letter-spacing: -.5px; margin-bottom: .75rem; }
+    .page-hero p { color: var(--text-muted); font-size: 1.05rem; max-width: 520px; margin: 0 auto; }
+
+    /* SECTION */
+    .section-label { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); margin-bottom: 1.25rem; display: flex; align-items: center; gap: .6rem; }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* SDK GRID */
+    .sdk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem; }
+    .sdk-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.5rem; transition: all var(--transition); position: relative; overflow: hidden; }
+    .sdk-card::before { content: ''; position: absolute; inset: 0; opacity: 0; background: linear-gradient(135deg, var(--brand-light), transparent); transition: opacity var(--transition); pointer-events: none; }
+    .sdk-card:hover { border-color: var(--brand); box-shadow: var(--shadow); transform: translateY(-2px); }
+    .sdk-card:hover::before { opacity: 1; }
+    .sdk-top { display: flex; align-items: center; gap: .9rem; margin-bottom: 1rem; }
+    .sdk-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
+    .sdk-icon.node { background: #d4f4e0; }
+    .sdk-icon.python { background: #e8f0fd; }
+    .sdk-icon.php { background: #ede9fb; }
+    .sdk-icon.curl { background: #fff3e0; }
+    html.dark .sdk-icon.node { background: rgba(74,222,128,.15); }
+    html.dark .sdk-icon.python { background: rgba(59,130,246,.15); }
+    html.dark .sdk-icon.php { background: rgba(139,92,246,.15); }
+    html.dark .sdk-icon.curl { background: rgba(251,191,36,.15); }
+    .sdk-name { font-size: 1.05rem; font-weight: 700; }
+    .sdk-version { font-size: .75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+    .sdk-desc { font-size: .88rem; color: var(--text-muted); margin-bottom: 1.1rem; line-height: 1.5; }
+    .code-block { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: var(--radius-sm); padding: .65rem .9rem; font-family: 'JetBrains Mono', monospace; font-size: .8rem; color: #e6edf3; margin-bottom: 1rem; white-space: pre; overflow-x: auto; }
+    .sdk-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+    .sdk-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1rem; border-radius: 8px; font-size: .83rem; font-weight: 600; transition: all var(--transition); }
+    .sdk-btn-primary { background: var(--brand); color: #fff; }
+    .sdk-btn-primary:hover { background: var(--brand-dark); }
+    .sdk-btn-ghost { border: 1.5px solid var(--border); color: var(--text-muted); }
+    .sdk-btn-ghost:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+    .sdk-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .badge-coming { display: inline-flex; align-items: center; gap: .3rem; background: rgba(245,158,11,.15); color: #d97706; font-size: .7rem; font-weight: 700; padding: .2rem .5rem; border-radius: 5px; text-transform: uppercase; letter-spacing: .4px; position: absolute; top: 1rem; right: 1rem; }
+
+    /* TOOL CARDS */
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem; }
+    .tool-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.5rem; display: flex; flex-direction: column; gap: .75rem; transition: all var(--transition); }
+    .tool-card:hover { border-color: var(--brand); box-shadow: var(--shadow); transform: translateY(-2px); }
+    .tool-icon { width: 44px; height: 44px; border-radius: 11px; background: var(--brand-light); display: flex; align-items: center; justify-content: center; }
+    .tool-icon svg { width: 22px; height: 22px; stroke: var(--brand); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tool-name { font-size: 1rem; font-weight: 700; }
+    .tool-desc { font-size: .87rem; color: var(--text-muted); flex: 1; }
+    .tool-action { display: inline-flex; align-items: center; gap: .4rem; color: var(--brand); font-size: .87rem; font-weight: 600; transition: gap var(--transition); }
+    .tool-action:hover { gap: .7rem; }
+    .tool-action svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+    /* FOOTER */
+    footer { background: #1a1f2e; color: #9ca3af; padding: 2.5rem 1.5rem 1.5rem; }
+    .footer-inner { max-width: 1140px; margin: 0 auto; }
+    .footer-cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .footer-col h4 { font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #e6edf3; margin-bottom: .75rem; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: .4rem; }
+    .footer-col ul li a { font-size: .85rem; color: #9ca3af; transition: color var(--transition); }
+    .footer-col ul li a:hover { color: #e6edf3; }
+    .footer-bottom { text-align: center; font-size: .82rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.08); }
+    .footer-bottom span { color: var(--brand); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="index" class="logo-link">
+      <img src="nexapay.png" width="36" height="36" alt="NexaPay" style="border-radius:10px;display:block;object-fit:contain;">
+      <div>
+        <div class="logo-text">Nexa<span class="logo-pay-accent">Pay</span></div>
+        <div class="logo-sub">by Elicate Technologies</div>
+      </div>
+    </a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="dark-toggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="hamburger" id="hamburger" onclick="toggleDrawer()"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <a href="index" class="logo-link">
+      <img src="nexapay.png" width="30" height="30" alt="NexaPay" style="border-radius:9px;display:block;object-fit:contain;">
+      <span class="logo-text">Nexa<span class="logo-pay-accent">Pay</span></span>
+    </a>
+    <button class="drawer-close" onclick="closeDrawer()">&#x2715;</button>
+  </div>
+  <ul class="drawer-nav">
+    <li><a href="index"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Home</a></li>
+    <li><a href="docs"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>Documentation</a></li>
+    <li><a href="sandbox"><span class="nav-icon"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>Sandbox Tester</a></li>
+    <li><a href="sdks" class="active"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>SDKs</a></li>
+    <li><a href="about"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>About Us</a></li>
+  </ul>
+  <div class="drawer-divider"></div>
+  <div class="drawer-actions">
+    <a href="auth" class="btn btn-outline btn-full">Sign In</a>
+    <a href="auth" class="btn btn-primary btn-full">Get Started</a>
+  </div>
+</div>
+
+<div class="page-wrap">
+  <div class="page-hero">
+    <div class="hero-badge">
+      <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      SDKs & Developer Tools
+    </div>
+    <h1>Integrate in Minutes</h1>
+    <p>Official NexaPay libraries for every major language. Install, configure your API key, and start accepting mobile money.</p>
+  </div>
+
+  <!-- SDKs -->
+  <div class="section-label">Official SDKs</div>
+  <div class="sdk-grid">
+
+    <!-- Node.js -->
+    <div class="sdk-card">
+      <div class="sdk-top">
+        <div class="sdk-icon node">🟢</div>
+        <div>
+          <div class="sdk-name">Node.js / TypeScript</div>
+          <div class="sdk-version">nexapay-node &nbsp;·&nbsp; v1.0.0</div>
+        </div>
+      </div>
+      <p class="sdk-desc">Full TypeScript support. Works with Express, Fastify, Next.js, NestJS, and any Node.js environment.</p>
+      <div class="code-block">npm install nexapay-node</div>
+      <div class="sdk-actions">
+        <a href="docs" class="sdk-btn sdk-btn-primary">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          View Docs
+        </a>
+        <a href="sandbox" class="sdk-btn sdk-btn-ghost">
+          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Try Sandbox
+        </a>
+      </div>
+    </div>
+
+    <!-- Python -->
+    <div class="sdk-card">
+      <div class="sdk-top">
+        <div class="sdk-icon python">🐍</div>
+        <div>
+          <div class="sdk-name">Python</div>
+          <div class="sdk-version">nexapay-python &nbsp;·&nbsp; v1.0.0</div>
+        </div>
+      </div>
+      <p class="sdk-desc">Compatible with Django, Flask, FastAPI. Full async/await support with <code style="font-family:monospace;font-size:.8em">httpx</code>.</p>
+      <div class="code-block">pip install nexapay</div>
+      <div class="sdk-actions">
+        <a href="docs" class="sdk-btn sdk-btn-primary">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          View Docs
+        </a>
+        <a href="sandbox" class="sdk-btn sdk-btn-ghost">
+          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Try Sandbox
+        </a>
+      </div>
+    </div>
+
+    <!-- PHP -->
+    <div class="sdk-card">
+      <div class="sdk-top">
+        <div class="sdk-icon php">🐘</div>
+        <div>
+          <div class="sdk-name">PHP</div>
+          <div class="sdk-version">nexapay-php &nbsp;·&nbsp; v1.0.0</div>
+        </div>
+      </div>
+      <p class="sdk-desc">Works with Laravel, Symfony, WordPress plugins, or any plain PHP application. Requires PHP 8.0+.</p>
+      <div class="code-block">composer require nexapay/nexapay-php</div>
+      <div class="sdk-actions">
+        <a href="docs" class="sdk-btn sdk-btn-primary">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          View Docs
+        </a>
+        <a href="sandbox" class="sdk-btn sdk-btn-ghost">
+          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Try Sandbox
+        </a>
+      </div>
+    </div>
+
+    <!-- cURL / REST -->
+    <div class="sdk-card">
+      <div class="sdk-top">
+        <div class="sdk-icon curl">⚡</div>
+        <div>
+          <div class="sdk-name">REST API / cURL</div>
+          <div class="sdk-version">Any language &nbsp;·&nbsp; HTTP</div>
+        </div>
+      </div>
+      <p class="sdk-desc">Use the raw REST API from any language — Ruby, Go, Java, Dart, or anything that can make HTTP requests.</p>
+      <div class="code-block">curl -X POST \
+  -H "Authorization: Bearer npay_test_..." \
+  {{base_url}}/sandbox/v2/payments/charge</div>
+      <div class="sdk-actions">
+        <a href="docs" class="sdk-btn sdk-btn-primary">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          API Reference
+        </a>
+        <a href="sandbox" class="sdk-btn sdk-btn-ghost">
+          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Try Live
+        </a>
+      </div>
+    </div>
+
+    <!-- React Native — Coming Soon -->
+    <div class="sdk-card" style="opacity:.8">
+      <span class="badge-coming">Coming Soon</span>
+      <div class="sdk-top">
+        <div class="sdk-icon" style="background:#fce7f3;font-size:1.6rem;">⚛️</div>
+        <div>
+          <div class="sdk-name">React Native</div>
+          <div class="sdk-version">nexapay-rn &nbsp;·&nbsp; In Progress</div>
+        </div>
+      </div>
+      <p class="sdk-desc">Native mobile checkout drop-in for React Native and Expo. Built-in OTP screen and loading states.</p>
+      <div class="sdk-actions">
+        <a href="mailto:support@nexapay.net?subject=SDK%20Early%20Access" class="sdk-btn sdk-btn-ghost">
+          Notify Me
+        </a>
+      </div>
+    </div>
+
+    <!-- WordPress — Coming Soon -->
+    <div class="sdk-card" style="opacity:.8">
+      <span class="badge-coming">Coming Soon</span>
+      <div class="sdk-top">
+        <div class="sdk-icon" style="background:#e0f2fe;font-size:1.6rem;">🔷</div>
+        <div>
+          <div class="sdk-name">WordPress / WooCommerce</div>
+          <div class="sdk-version">nexapay-woo &nbsp;·&nbsp; In Progress</div>
+        </div>
+      </div>
+      <p class="sdk-desc">One-click WooCommerce payment gateway plugin. Accept MTN, Airtel, and EcoCash at checkout.</p>
+      <div class="sdk-actions">
+        <a href="mailto:support@nexapay.net?subject=WooCommerce%20Plugin" class="sdk-btn sdk-btn-ghost">
+          Notify Me
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TOOLS -->
+  <div class="section-label">Developer Tools</div>
+  <div class="tools-grid">
+
+    <div class="tool-card">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+      <div class="tool-name">Postman Collection</div>
+      <div class="tool-desc">Full collection of every API endpoint pre-configured with test keys, variables, and auto-save scripts. Import in one click.</div>
+      <a href="nexapay-postman-collection.json" download class="tool-action">
+        Download Collection
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </a>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </div>
+      <div class="tool-name">Sandbox Tester</div>
+      <div class="tool-desc">Fire live API calls from your browser — no code needed. Test payments, payouts, refunds and see real JSON responses.</div>
+      <a href="sandbox" class="tool-action">
+        Open Tester
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <div class="tool-name">API Reference</div>
+      <div class="tool-desc">Full endpoint reference with request/response schemas, error codes, and code examples in 4 languages.</div>
+      <a href="docs" class="tool-action">
+        View Docs
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.43 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.56a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </div>
+      <div class="tool-name">Developer Support</div>
+      <div class="tool-desc">Stuck on an integration? Reach the NexaPay team directly via email or WhatsApp — we respond within 24 hours.</div>
+      <a href="mailto:support@nexapay.net" class="tool-action">
+        Contact Us
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="index#features">Features</a></li>
+          <li><a href="docs">Documentation</a></li>
+          <li><a href="sandbox">Sandbox</a></li>
+          <li><a href="sdks">SDKs</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about">About Us</a></li>
+          <li><a href="blog">Blog</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="terms">Terms of Service</a></li>
+          <li><a href="privacy">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 <span>Elicate Technologies Limited</span>. All rights reserved. &nbsp;&middot;&nbsp; NexaPay &mdash; Mobile Payments for Southern Africa
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleDrawer() {
+    const d=document.getElementById('drawer'),o=document.getElementById('overlay'),h=document.getElementById('hamburger');
+    d.classList.toggle('open'); o.classList.toggle('visible'); h.classList.toggle('open');
+    document.body.style.overflow=d.classList.contains('open')?'hidden':'';
+  }
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('overlay').classList.remove('visible');
+    document.getElementById('hamburger').classList.remove('open');
+    document.body.style.overflow='';
+  }
+  window.addEventListener('scroll',()=>{ document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>20); },{passive:true});
+  (function(){
+    var btn=document.getElementById('dark-toggle');
+    if(!btn) return;
+    var saved=localStorage.getItem('theme');
+    if(saved==='dark') document.documentElement.classList.add('dark');
+    btn.addEventListener('click',function(){
+      var isDark=document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme',isDark?'dark':'light');
+    });
+  })();
+</script>
+<script src="sw-transitions.js" onerror="void 0"></script>
+</body>
+</html>

@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sandbox Tester — NexaPay</title>
+  <meta name="description" content="Test NexaPay API calls interactively — no code needed. Fire payments, payouts, refunds and see live responses." />
+  <link rel="icon" href="nexapay.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f4f5f9; color: #1a1f2e; line-height: 1.6; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; }
+
+    :root {
+      --brand: #3b5bdb; --brand-dark: #2f4ac0; --brand-light: #e8edff; --brand-muted: #748ffc;
+      --surface: #fff; --bg: #f4f5f9; --bg-dark: #edf0f7;
+      --text: #1a1f2e; --text-muted: #6b7280; --text-light: #9ca3af;
+      --border: #e5e7eb; --shadow: 0 4px 16px rgba(0,0,0,.08); --radius: 16px; --radius-sm: 10px;
+      --nav-h: 68px; --transition: .3s cubic-bezier(.4,0,.2,1);
+      --code-bg: #0d1117; --code-border: #21262d;
+      --green: #10b981; --red: #ef4444; --yellow: #f59e0b; --orange: #f97316;
+    }
+    html.dark { --surface: #1a1f2e; --bg: #0d1117; --bg-dark: #161b22; --text: #e6edf3; --text-muted: #8b949e; --border: #30363d; --brand-light: rgba(59,91,219,.18); --code-bg: #010409; --code-border: #21262d; }
+    html.dark body { background: var(--bg); color: var(--text); }
+    html.dark nav { background: rgba(13,17,23,.95); border-bottom-color: rgba(255,255,255,.07); }
+    html.dark nav.scrolled { background: rgba(13,17,23,.99); }
+    html.dark .drawer { background: #161b22; }
+    html.dark footer { background: #161b22; }
+    html.dark .form-card { background: var(--surface); }
+    html.dark input, html.dark select { background: #161b22; border-color: var(--border); color: var(--text); }
+    html.dark .test-num-card { background: #161b22; }
+    html.dark .tab-bar { background: #161b22; border-color: var(--border); }
+
+    /* ─── NAV ─── */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: var(--nav-h); background: rgba(244,245,249,.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,.6); display: flex; align-items: center; padding: 0 1.5rem; transition: background var(--transition), box-shadow var(--transition); }
+    nav.scrolled { background: rgba(244,245,249,.98); box-shadow: 0 1px 20px rgba(0,0,0,.08); }
+    .nav-inner { width: 100%; max-width: 1140px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo-link { display: flex; align-items: center; gap: .6rem; }
+    .logo-text { font-size: 1.18rem; font-weight: 900; letter-spacing: -.7px; background: linear-gradient(135deg,#4338ca,#6d28d9,#a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .logo-pay-accent { font-weight: 900; font-style: italic; }
+    .logo-sub { font-size: .62rem; font-weight: 500; color: var(--text-muted); letter-spacing: .4px; text-transform: uppercase; margin-top: -2px; -webkit-text-fill-color: var(--text-muted); }
+    .nav-right { display: flex; align-items: center; gap: .4rem; }
+    .dark-toggle { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 1.5px solid var(--border); color: var(--text-muted); cursor: pointer; transition: all var(--transition); }
+    .dark-toggle:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+    .dark-toggle svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .dark-toggle .icon-sun { display: block; } .dark-toggle .icon-moon { display: none; }
+    html.dark .dark-toggle .icon-sun { display: none; } html.dark .dark-toggle .icon-moon { display: block; }
+    .hamburger { width: 38px; height: 38px; border-radius: 9px; background: var(--surface); border: 1.5px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; }
+    .hamburger span { display: block; width: 16px; height: 2px; background: var(--text-muted); border-radius: 2px; transition: all var(--transition); }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── DRAWER ─── */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 999; opacity: 0; pointer-events: none; transition: opacity var(--transition); }
+    .overlay.visible { opacity: 1; pointer-events: all; }
+    .drawer { position: fixed; top: 0; right: 0; height: 100dvh; width: min(320px,88vw); background: var(--surface); z-index: 1001; transform: translateX(100%); transition: transform var(--transition); padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { display: flex; align-items: center; justify-content: space-between; }
+    .drawer-close { width: 34px; height: 34px; border-radius: 8px; background: var(--bg); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; }
+    .drawer-nav { list-style: none; display: flex; flex-direction: column; gap: .25rem; }
+    .drawer-nav a { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; border-radius: 10px; font-size: .93rem; font-weight: 500; color: var(--text); transition: all var(--transition); }
+    .drawer-nav a:hover, .drawer-nav a.active { background: var(--brand-light); color: var(--brand); }
+    .nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+    .nav-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .drawer-divider { height: 1px; background: var(--border); }
+    .drawer-actions { display: flex; flex-direction: column; gap: .6rem; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .65rem 1.25rem; border-radius: 10px; font-size: .9rem; font-weight: 600; transition: all var(--transition); }
+    .btn-primary { background: var(--brand); color: #fff; } .btn-primary:hover { background: var(--brand-dark); }
+    .btn-outline { border: 1.5px solid var(--border); color: var(--text); } .btn-outline:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+    .btn-full { width: 100%; }
+
+    /* ─── PAGE ─── */
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: calc(var(--nav-h) + 2.5rem) 1.5rem 5rem; }
+
+    .page-hero { text-align: center; margin-bottom: 2.5rem; }
+    .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: var(--brand-light); color: var(--brand); font-size: .78rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: .35rem .9rem; border-radius: 50px; margin-bottom: 1rem; }
+    .hero-badge svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .page-hero h1 { font-size: clamp(1.7rem, 5vw, 2.5rem); font-weight: 800; letter-spacing: -.5px; margin-bottom: .65rem; }
+    .page-hero p { color: var(--text-muted); font-size: 1rem; max-width: 500px; margin: 0 auto; }
+
+    /* ─── TEST NUMBERS ─── */
+    .test-numbers { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1.75rem; }
+    .test-numbers-head { display: flex; align-items: center; gap: .6rem; font-size: .88rem; font-weight: 700; margin-bottom: 1rem; }
+    .test-numbers-head svg { width: 16px; height: 16px; stroke: var(--brand); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .test-num-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr)); gap: .55rem; }
+    .test-num-card { display: flex; align-items: center; justify-content: space-between; padding: .55rem .85rem; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); user-select: none; }
+    .test-num-card:hover { border-color: var(--brand); background: var(--brand-light); transform: translateY(-1px); }
+    .tn-num { font-family: 'JetBrains Mono', monospace; font-size: .83rem; font-weight: 600; }
+    .tn-badge { font-size: .7rem; font-weight: 700; padding: .18rem .5rem; border-radius: 5px; }
+    .tn-s { background: rgba(16,185,129,.15); color: #059669; }
+    .tn-f { background: rgba(239,68,68,.15); color: #dc2626; }
+    .tn-t { background: rgba(245,158,11,.15); color: #b45309; }
+    .tn-i { background: rgba(249,115,22,.15); color: #c2410c; }
+
+    /* ─── TABS ─── */
+    .tab-bar { display: flex; gap: .4rem; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: .28rem; margin-bottom: 1.75rem; overflow-x: auto; }
+    .tab-btn { flex-shrink: 0; padding: .5rem 1rem; border-radius: 7px; font-size: .86rem; font-weight: 600; color: var(--text-muted); transition: all var(--transition); white-space: nowrap; }
+    .tab-btn.active { background: var(--brand); color: #fff; }
+    .tab-btn:hover:not(.active) { background: var(--brand-light); color: var(--brand); }
+
+    /* ─── TESTER GRID ─── */
+    .tester-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+    @media(max-width: 760px) { .tester-grid { grid-template-columns: 1fr; } }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ─── FORM ─── */
+    .form-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+    .form-card-title { font-size: .95rem; font-weight: 700; display: flex; align-items: center; gap: .55rem; margin-bottom: 1.25rem; }
+    .form-card-title svg { width: 17px; height: 17px; stroke: var(--brand); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .field { margin-bottom: .9rem; }
+    .field label { display: block; font-size: .75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .45px; margin-bottom: .35rem; }
+    .field input, .field select { width: 100%; padding: .62rem .9rem; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: .92rem; font-family: inherit; background: var(--bg); color: var(--text); outline: none; transition: border-color var(--transition); }
+    .field input:focus, .field select:focus { border-color: var(--brand); }
+    .field .hint { font-size: .76rem; color: var(--text-muted); margin-top: .3rem; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+    .key-field { font-family: 'JetBrains Mono', monospace; font-size: .82rem !important; }
+
+    .send-btn { width: 100%; margin-top: .4rem; padding: .78rem; border-radius: var(--radius-sm); background: var(--brand); color: #fff; font-size: .93rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: .55rem; transition: all var(--transition); border: none; cursor: pointer; }
+    .send-btn:hover:not(:disabled) { background: var(--brand-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,91,219,.35); }
+    .send-btn:disabled { background: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none; }
+    .send-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ─── RESPONSE PANEL ─── */
+    .res-panel { background: var(--code-bg); border: 1.5px solid var(--code-border); border-radius: var(--radius); overflow: hidden; }
+    .res-header { display: flex; align-items: center; justify-content: space-between; padding: .7rem 1rem; border-bottom: 1px solid var(--code-border); gap: .5rem; flex-wrap: wrap; }
+    .res-method { font-family: 'JetBrains Mono', monospace; font-size: .72rem; font-weight: 700; color: #58a6ff; }
+    .res-path { font-family: 'JetBrains Mono', monospace; font-size: .72rem; color: #8b949e; }
+    .res-status { font-family: 'JetBrains Mono', monospace; font-size: .72rem; font-weight: 700; padding: .2rem .6rem; border-radius: 5px; }
+    .s-wait { background: rgba(139,148,158,.15); color: #8b949e; }
+    .s-ok { background: rgba(16,185,129,.2); color: #34d399; }
+    .s-err { background: rgba(239,68,68,.2); color: #f87171; }
+    .s-proc { background: rgba(59,91,219,.2); color: #818cf8; }
+
+    /* Processing steps */
+    .res-steps { padding: 1rem 1.1rem; border-bottom: 1px solid var(--code-border); display: none; }
+    .res-steps.visible { display: block; }
+    .step-line { display: flex; align-items: center; gap: .65rem; font-size: .78rem; font-family: 'JetBrains Mono', monospace; color: #8b949e; margin-bottom: .5rem; opacity: 0; transition: opacity .3s; }
+    .step-line.show { opacity: 1; }
+    .step-line:last-child { margin-bottom: 0; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-wait { background: #30363d; }
+    .dot-spin { background: var(--brand); animation: pulse .8s ease-in-out infinite; }
+    .dot-done { background: #34d399; }
+    .dot-fail { background: #f87171; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* JSON body */
+    .res-body { padding: 1.1rem; font-family: 'JetBrains Mono', monospace; font-size: .78rem; line-height: 1.8; min-height: 120px; overflow-y: auto; max-height: 400px; }
+    .res-body .ph { color: #4a5568; font-style: italic; }
+    /* syntax highlight */
+    .jk { color: #79c0ff; }   /* key */
+    .js { color: #a5d6ff; }   /* string value */
+    .jn { color: #ff7b72; }   /* number */
+    .jb { color: #ff9e64; }   /* bool */
+    .jp { color: #e6edf3; }   /* punctuation */
+    .jc { color: #8b949e; }   /* comment */
+
+    /* Latency badge */
+    .res-footer { padding: .5rem 1rem; border-top: 1px solid var(--code-border); display: none; justify-content: space-between; align-items: center; }
+    .res-footer.visible { display: flex; }
+    .res-latency { font-family: 'JetBrains Mono', monospace; font-size: .7rem; color: #8b949e; }
+    .res-copy { font-size: .7rem; font-weight: 600; color: #58a6ff; cursor: pointer; background: none; border: none; font-family: inherit; transition: color var(--transition); }
+    .res-copy:hover { color: #a5d6ff; }
+
+    /* ─── SPINNER ─── */
+    .spin { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: spin .65s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── FOOTER ─── */
+    footer { background: #161b22; color: #9ca3af; padding: 2rem 1.5rem 1.5rem; }
+    .footer-inner { max-width: 1140px; margin: 0 auto; }
+    .footer-bottom { text-align: center; font-size: .82rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.08); }
+    .footer-bottom span { color: var(--brand); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="index" class="logo-link">
+      <img src="nexapay.png" width="36" height="36" alt="NexaPay" style="border-radius:10px;display:block;object-fit:contain;">
+      <div>
+        <div class="logo-text">Nexa<span class="logo-pay-accent">Pay</span></div>
+        <div class="logo-sub">by Elicate Technologies</div>
+      </div>
+    </a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="dark-toggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="hamburger" id="hamburger" onclick="toggleDrawer()"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <a href="index" class="logo-link">
+      <img src="nexapay.png" width="30" height="30" alt="NexaPay" style="border-radius:9px;display:block;object-fit:contain;">
+      <span class="logo-text">Nexa<span class="logo-pay-accent">Pay</span></span>
+    </a>
+    <button class="drawer-close" onclick="closeDrawer()">&#x2715;</button>
+  </div>
+  <ul class="drawer-nav">
+    <li><a href="index"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Home</a></li>
+    <li><a href="docs"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>Documentation</a></li>
+    <li><a href="sandbox" class="active"><span class="nav-icon"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>Sandbox Tester</a></li>
+    <li><a href="sdks"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>SDKs</a></li>
+  </ul>
+  <div class="drawer-divider"></div>
+  <div class="drawer-actions">
+    <a href="auth" class="btn btn-outline btn-full">Sign In</a>
+    <a href="auth" class="btn btn-primary btn-full">Get Started</a>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="page-hero">
+    <div class="hero-badge">
+      <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      Interactive Sandbox
+    </div>
+    <h1>Test the NexaPay API</h1>
+    <p>Fire real-looking API requests with instant simulated responses. No sign-up. No code needed.</p>
+  </div>
+
+  <!-- TEST NUMBERS -->
+  <div class="test-numbers">
+    <div class="test-numbers-head">
+      <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+      Test Phone Numbers — tap any to use it
+    </div>
+    <div class="test-num-grid">
+      <div class="test-num-card" onclick="useNumber('260960000001')">
+        <span class="tn-num">260960000001</span>
+        <span class="tn-badge tn-s">✓ Success</span>
+      </div>
+      <div class="test-num-card" onclick="useNumber('260960000002')">
+        <span class="tn-num">260960000002</span>
+        <span class="tn-badge tn-f">✗ Declined</span>
+      </div>
+      <div class="test-num-card" onclick="useNumber('260960000003')">
+        <span class="tn-num">260960000003</span>
+        <span class="tn-badge tn-t">⏱ Timeout</span>
+      </div>
+      <div class="test-num-card" onclick="useNumber('260960000004')">
+        <span class="tn-num">260960000004</span>
+        <span class="tn-badge tn-i">💸 Insuf. Funds</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('charge',this)">Charge Payment</button>
+    <button class="tab-btn" onclick="switchTab('status',this)">Check Status</button>
+    <button class="tab-btn" onclick="switchTab('payout',this)">Send Payout</button>
+    <button class="tab-btn" onclick="switchTab('refund',this)">Refund</button>
+    <button class="tab-btn" onclick="switchTab('balance',this)">Balance</button>
+  </div>
+
+  <!-- ═══ CHARGE ═══ -->
+  <div class="tab-pane active" id="pane-charge">
+    <div class="tester-grid">
+      <div class="form-card">
+        <div class="form-card-title"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Charge a Payment</div>
+        <div class="field">
+          <label>API Key</label>
+          <input type="text" id="c-key" class="key-field" value="npay_test_sk_demo_elicate_2026" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Amount</label>
+            <input type="number" id="c-amount" value="250" min="1" />
+          </div>
+          <div class="field">
+            <label>Currency</label>
+            <select id="c-currency">
+              <option value="ZMW">ZMW — Zambia</option>
+              <option value="ZWL">ZWL — Zimbabwe</option>
+              <option value="BWP">BWP — Botswana</option>
+              <option value="NAD">NAD — Namibia</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="text" id="c-phone" value="260960000001" />
+          <div class="hint">Tap a test number above to auto-fill</div>
+        </div>
+        <div class="field">
+          <label>Provider</label>
+          <select id="c-provider">
+            <option value="mtn">MTN Mobile Money</option>
+            <option value="airtel">Airtel Money</option>
+            <option value="ecocash">EcoCash</option>
+            <option value="orange">Orange Money</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Reference (optional)</label>
+          <input type="text" id="c-ref" placeholder="ORDER-2026-001" />
+        </div>
+        <button class="send-btn" id="btn-charge" onclick="runCharge()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Send Request
+        </button>
+      </div>
+      <div id="panel-charge">
+        <div class="res-panel">
+          <div class="res-header">
+            <div><span class="res-method">POST </span><span class="res-path">/sandbox/v2/payments/charge</span></div>
+            <span class="res-status s-wait" id="pill-charge">READY</span>
+          </div>
+          <div class="res-steps" id="steps-charge">
+            <div class="step-line" id="cs1"><span class="step-dot dot-wait" id="cd1"></span><span id="ct1">Authenticating API key...</span></div>
+            <div class="step-line" id="cs2"><span class="step-dot dot-wait" id="cd2"></span><span id="ct2">Validating request payload...</span></div>
+            <div class="step-line" id="cs3"><span class="step-dot dot-wait" id="cd3"></span><span id="ct3">Routing to provider...</span></div>
+            <div class="step-line" id="cs4"><span class="step-dot dot-wait" id="cd4"></span><span id="ct4">Initiating USSD push to customer...</span></div>
+            <div class="step-line" id="cs5"><span class="step-dot dot-wait" id="cd5"></span><span id="ct5">Awaiting confirmation...</span></div>
+          </div>
+          <div class="res-body" id="body-charge"><span class="ph">// Hit "Send Request" to see the response</span></div>
+          <div class="res-footer" id="foot-charge">
+            <span class="res-latency" id="lat-charge"></span>
+            <button class="res-copy" onclick="copyRes('body-charge')">Copy JSON</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STATUS ═══ -->
+  <div class="tab-pane" id="pane-status">
+    <div class="tester-grid">
+      <div class="form-card">
+        <div class="form-card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Check Payment Status</div>
+        <div class="field">
+          <label>API Key</label>
+          <input type="text" id="s-key" class="key-field" value="npay_test_sk_demo_elicate_2026" />
+        </div>
+        <div class="field">
+          <label>Payment ID</label>
+          <input type="text" id="s-id" placeholder="npay_ch_..." />
+          <div class="hint">Auto-filled after a Charge request — or paste any ID</div>
+        </div>
+        <button class="send-btn" id="btn-status" onclick="runStatus()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Check Status
+        </button>
+      </div>
+      <div>
+        <div class="res-panel">
+          <div class="res-header">
+            <div><span class="res-method">GET </span><span class="res-path">/sandbox/v2/payments/:id</span></div>
+            <span class="res-status s-wait" id="pill-status">READY</span>
+          </div>
+          <div class="res-steps" id="steps-status">
+            <div class="step-line" id="ss1"><span class="step-dot dot-wait" id="sd1"></span><span>Authenticating...</span></div>
+            <div class="step-line" id="ss2"><span class="step-dot dot-wait" id="sd2"></span><span>Looking up payment record...</span></div>
+            <div class="step-line" id="ss3"><span class="step-dot dot-wait" id="sd3"></span><span>Fetching provider status...</span></div>
+          </div>
+          <div class="res-body" id="body-status"><span class="ph">// Response will appear here</span></div>
+          <div class="res-footer" id="foot-status">
+            <span class="res-latency" id="lat-status"></span>
+            <button class="res-copy" onclick="copyRes('body-status')">Copy JSON</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAYOUT ═══ -->
+  <div class="tab-pane" id="pane-payout">
+    <div class="tester-grid">
+      <div class="form-card">
+        <div class="form-card-title"><svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Send a Payout</div>
+        <div class="field">
+          <label>API Key</label>
+          <input type="text" id="p-key" class="key-field" value="npay_test_sk_demo_elicate_2026" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Amount</label>
+            <input type="number" id="p-amount" value="100" min="1" />
+          </div>
+          <div class="field">
+            <label>Currency</label>
+            <select id="p-currency">
+              <option value="ZMW">ZMW</option><option value="ZWL">ZWL</option>
+              <option value="BWP">BWP</option><option value="NAD">NAD</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Recipient Phone</label>
+          <input type="text" id="p-phone" value="260960000001" />
+        </div>
+        <div class="field">
+          <label>Provider</label>
+          <select id="p-provider">
+            <option value="mtn">MTN Mobile Money</option><option value="airtel">Airtel Money</option>
+            <option value="ecocash">EcoCash</option><option value="orange">Orange Money</option>
+          </select>
+        </div>
+        <button class="send-btn" id="btn-payout" onclick="runPayout()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Send Payout
+        </button>
+      </div>
+      <div>
+        <div class="res-panel">
+          <div class="res-header">
+            <div><span class="res-method">POST </span><span class="res-path">/sandbox/v2/payouts</span></div>
+            <span class="res-status s-wait" id="pill-payout">READY</span>
+          </div>
+          <div class="res-steps" id="steps-payout">
+            <div class="step-line" id="ps1"><span class="step-dot dot-wait" id="pd1"></span><span>Authenticating API key...</span></div>
+            <div class="step-line" id="ps2"><span class="step-dot dot-wait" id="pd2"></span><span>Checking available balance...</span></div>
+            <div class="step-line" id="ps3"><span class="step-dot dot-wait" id="pd3"></span><span>Initiating transfer to wallet...</span></div>
+          </div>
+          <div class="res-body" id="body-payout"><span class="ph">// Response will appear here</span></div>
+          <div class="res-footer" id="foot-payout">
+            <span class="res-latency" id="lat-payout"></span>
+            <button class="res-copy" onclick="copyRes('body-payout')">Copy JSON</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ REFUND ═══ -->
+  <div class="tab-pane" id="pane-refund">
+    <div class="tester-grid">
+      <div class="form-card">
+        <div class="form-card-title"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>Refund a Payment</div>
+        <div class="field">
+          <label>API Key</label>
+          <input type="text" id="rf-key" class="key-field" value="npay_test_sk_demo_elicate_2026" />
+        </div>
+        <div class="field">
+          <label>Payment ID</label>
+          <input type="text" id="rf-id" placeholder="npay_ch_..." />
+        </div>
+        <div class="field">
+          <label>Refund Amount (blank = full refund)</label>
+          <input type="number" id="rf-amt" placeholder="Optional partial amount" />
+        </div>
+        <button class="send-btn" id="btn-refund" onclick="runRefund()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Issue Refund
+        </button>
+      </div>
+      <div>
+        <div class="res-panel">
+          <div class="res-header">
+            <div><span class="res-method">POST </span><span class="res-path">/sandbox/v2/payments/:id/refunds</span></div>
+            <span class="res-status s-wait" id="pill-refund">READY</span>
+          </div>
+          <div class="res-steps" id="steps-refund">
+            <div class="step-line" id="rfs1"><span class="step-dot dot-wait" id="rfd1"></span><span>Validating payment eligibility...</span></div>
+            <div class="step-line" id="rfs2"><span class="step-dot dot-wait" id="rfd2"></span><span>Processing reversal with provider...</span></div>
+            <div class="step-line" id="rfs3"><span class="step-dot dot-wait" id="rfd3"></span><span>Crediting customer wallet...</span></div>
+          </div>
+          <div class="res-body" id="body-refund"><span class="ph">// Response will appear here</span></div>
+          <div class="res-footer" id="foot-refund">
+            <span class="res-latency" id="lat-refund"></span>
+            <button class="res-copy" onclick="copyRes('body-refund')">Copy JSON</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BALANCE ═══ -->
+  <div class="tab-pane" id="pane-balance">
+    <div class="tester-grid">
+      <div class="form-card">
+        <div class="form-card-title"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Account Balance</div>
+        <div class="field">
+          <label>API Key</label>
+          <input type="text" id="b-key" class="key-field" value="npay_test_sk_demo_elicate_2026" />
+        </div>
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5;">Returns sandbox balances across all supported currencies. In production this reflects your real settlement balance.</p>
+        <button class="send-btn" id="btn-balance" onclick="runBalance()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Get Balance
+        </button>
+      </div>
+      <div>
+        <div class="res-panel">
+          <div class="res-header">
+            <div><span class="res-method">GET </span><span class="res-path">/sandbox/v2/balance</span></div>
+            <span class="res-status s-wait" id="pill-balance">READY</span>
+          </div>
+          <div class="res-steps" id="steps-balance">
+            <div class="step-line" id="bs1"><span class="step-dot dot-wait" id="bd1"></span><span>Authenticating...</span></div>
+            <div class="step-line" id="bs2"><span class="step-dot dot-wait" id="bd2"></span><span>Fetching settlement accounts...</span></div>
+          </div>
+          <div class="res-body" id="body-balance"><span class="ph">// Response will appear here</span></div>
+          <div class="res-footer" id="foot-balance">
+            <span class="res-latency" id="lat-balance"></span>
+            <button class="res-copy" onclick="copyRes('body-balance')">Copy JSON</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-bottom">
+      &copy; 2026 <span>Elicate Technologies Limited</span>. All rights reserved. &nbsp;&middot;&nbsp; NexaPay &mdash; Mobile Payments for Southern Africa
+    </div>
+  </div>
+</footer>
+
+<script>
+// ─── UTILITIES ─────────────────────────────────────────────────────────────
+function uid(prefix) {
+  return prefix + '_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+}
+function ts() { return new Date().toISOString(); }
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+const providerNames = { mtn:'MTN Mobile Money', airtel:'Airtel Money', ecocash:'EcoCash', orange:'Orange Money' };
+const currencySymbols = { ZMW:'K', ZWL:'$', BWP:'P', NAD:'N$' };
+
+// ─── SYNTAX HIGHLIGHT ──────────────────────────────────────────────────────
+function highlight(obj) {
+  const raw = JSON.stringify(obj, null, 2);
+  return raw
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => {
+      if (/^"/.test(m)) {
+        if (/:$/.test(m)) return '<span class="jk">' + m + '</span>';
+        return '<span class="js">' + m + '</span>';
+      }
+      if (/true|false/.test(m)) return '<span class="jb">' + m + '</span>';
+      if (/null/.test(m)) return '<span class="jb">' + m + '</span>';
+      return '<span class="jn">' + m + '</span>';
+    });
+}
+
+function setBody(id, obj) {
+  document.getElementById(id).innerHTML = highlight(obj);
+}
+function copyRes(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.innerText).then(() => {
+    const btn = el.closest('.res-panel').querySelector('.res-copy');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy JSON', 1800);
+  });
+}
+
+// ─── STEP RUNNER ───────────────────────────────────────────────────────────
+async function runSteps(stepIds, dotIds, delays) {
+  const stepsEl = document.getElementById('steps-' + stepIds[0].split('s')[0].replace(/\d/g,''));
+  // show panel
+  const panel = document.getElementById('steps-' + stepIds[0]);
+  // just show all step lines container
+  for (let i = 0; i < stepIds.length; i++) {
+    await sleep(delays[i] || 400);
+    const s = document.getElementById(stepIds[i]);
+    const d = document.getElementById(dotIds[i]);
+    if (!s || !d) continue;
+    s.classList.add('show');
+    d.className = 'step-dot dot-spin';
+    await sleep(delays[i + stepIds.length] || 600);
+    d.className = 'step-dot dot-done';
+  }
+}
+
+// ─── STEPS SHOW/HIDE ───────────────────────────────────────────────────────
+function showSteps(prefix) {
+  const el = document.getElementById('steps-' + prefix);
+  if (el) { el.classList.add('visible'); el.querySelectorAll('.step-line').forEach(l => l.classList.remove('show')); }
+  // reset dots
+  el && el.querySelectorAll('.step-dot').forEach(d => { d.className = 'step-dot dot-wait'; });
+}
+function hideSteps(prefix) {
+  const el = document.getElementById('steps-' + prefix);
+  if (el) el.classList.remove('visible');
+}
+function setPill(id, text, cls) {
+  const el = document.getElementById('pill-' + id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'res-status ' + cls;
+}
+function showFooter(prefix, ms) {
+  const f = document.getElementById('foot-' + prefix);
+  const l = document.getElementById('lat-' + prefix);
+  if (f) f.classList.add('visible');
+  if (l) l.textContent = ms + 'ms';
+}
+function setBtnLoading(id, loading) {
+  const btn = document.getElementById('btn-' + id);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.innerHTML = loading
+    ? '<div class="spin"></div> Processing...'
+    : btn.getAttribute('data-label') || '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send Request';
+}
+
+// ─── TEST NUMBER OUTCOME ───────────────────────────────────────────────────
+function getOutcome(phone) {
+  const p = String(phone).replace(/\s/g, '');
+  if (p.endsWith('0002')) return 'declined';
+  if (p.endsWith('0003')) return 'timeout';
+  if (p.endsWith('0004')) return 'insufficient_funds';
+  return 'success'; // 0001 or any other
+}
+
+// ─── CHARGE ────────────────────────────────────────────────────────────────
+async function runCharge() {
+  const t0 = Date.now();
+  const phone    = document.getElementById('c-phone').value.trim();
+  const amount   = Number(document.getElementById('c-amount').value);
+  const currency = document.getElementById('c-currency').value;
+  const provider = document.getElementById('c-provider').value;
+  const ref      = document.getElementById('c-ref').value.trim() || 'ORDER-' + Date.now().toString().slice(-6);
+  const key      = document.getElementById('c-key').value.trim();
+
+  setBtnLoading('charge', true);
+  setPill('charge', 'PROCESSING', 's-proc');
+  showSteps('charge');
+  document.getElementById('body-charge').innerHTML = '<span class="ph">// Processing...</span>';
+  document.getElementById('foot-charge').classList.remove('visible');
+
+  const outcome = getOutcome(phone);
+  const paymentId = uid('npay_ch');
+  const provName = providerNames[provider] || provider;
+
+  // Step 1 — auth
+  document.getElementById('cs1').classList.add('show');
+  document.getElementById('cd1').className = 'step-dot dot-spin';
+  await sleep(rand(350,550));
+  document.getElementById('cd1').className = 'step-dot dot-done';
+
+  // Step 2 — validate
+  document.getElementById('cs2').classList.add('show');
+  document.getElementById('cd2').className = 'step-dot dot-spin';
+  await sleep(rand(280,420));
+  document.getElementById('cd2').className = 'step-dot dot-done';
+
+  // Step 3 — route
+  document.getElementById('cs3').classList.add('show');
+  document.getElementById('cd3').className = 'step-dot dot-spin';
+  await sleep(rand(380,600));
+  document.getElementById('cd3').className = 'step-dot dot-done';
+
+  // Step 4 — push
+  document.getElementById('cs4').classList.add('show');
+  document.getElementById('cd4').className = 'step-dot dot-spin';
+  await sleep(rand(500,800));
+  document.getElementById('cd4').className = outcome === 'timeout' ? 'step-dot dot-fail' : 'step-dot dot-done';
+
+  // Step 5 — confirm
+  document.getElementById('cs5').classList.add('show');
+  document.getElementById('cd5').className = 'step-dot dot-spin';
+  await sleep(outcome === 'timeout' ? rand(1200,1800) : rand(600,900));
+  document.getElementById('cd5').className = outcome === 'success' ? 'step-dot dot-done' : 'step-dot dot-fail';
+
+  const elapsed = Date.now() - t0;
+
+  let response;
+  if (outcome === 'success') {
+    response = {
+      object: "payment",
+      id: paymentId,
+      status: "successful",
+      amount: amount,
+      amount_formatted: currencySymbols[currency] + amount.toFixed(2),
+      currency: currency,
+      provider: provider,
+      provider_name: provName,
+      phone: phone,
+      reference: ref,
+      description: "Payment via NexaPay Sandbox",
+      narration: "NEXAPAY*" + ref,
+      transaction_id: uid('TXN'),
+      provider_tx_ref: uid(provider.toUpperCase()),
+      fee: parseFloat((amount * 0.015).toFixed(2)),
+      fee_currency: currency,
+      net_amount: parseFloat((amount * 0.985).toFixed(2)),
+      exchange_rate: null,
+      metadata: { source: "sandbox", ip: "41.175.32." + rand(10,250), user_agent: "NexaPay-Sandbox-Tester/1.0" },
+      webhook_delivered: true,
+      webhook_url: "https://your-server.com/webhook",
+      created_at: ts(),
+      completed_at: ts(),
+      livemode: false
+    };
+    setPill('charge', '200 OK', 's-ok');
+  } else if (outcome === 'declined') {
+    response = {
+      object: "error",
+      status: "failed",
+      error: { code: "payment_declined", message: "Transaction declined by provider. Customer may have entered an incorrect PIN.", provider_code: "101", provider_message: "INVALID_PIN" },
+      id: paymentId,
+      amount: amount,
+      currency: currency,
+      provider: provider,
+      phone: phone,
+      reference: ref,
+      created_at: ts(),
+      livemode: false
+    };
+    setPill('charge', '402 DECLINED', 's-err');
+  } else if (outcome === 'timeout') {
+    response = {
+      object: "error",
+      status: "expired",
+      error: { code: "ussd_timeout", message: "Customer did not respond to the USSD prompt within 120 seconds. No funds were deducted.", provider_code: "408", provider_message: "REQUEST_TIMEOUT" },
+      id: paymentId,
+      amount: amount,
+      currency: currency,
+      provider: provider,
+      phone: phone,
+      reference: ref,
+      expired_at: ts(),
+      livemode: false
+    };
+    setPill('charge', '408 TIMEOUT', 's-err');
+  } else {
+    response = {
+      object: "error",
+      status: "failed",
+      error: { code: "insufficient_funds", message: "Customer's mobile money wallet has insufficient funds to complete this transaction.", available_balance: parseFloat((amount * 0.3).toFixed(2)), required_amount: amount, currency: currency, provider_code: "403", provider_message: "LOW_BALANCE" },
+      id: paymentId,
+      amount: amount,
+      currency: currency,
+      provider: provider,
+      phone: phone,
+      reference: ref,
+      created_at: ts(),
+      livemode: false
+    };
+    setPill('charge', '402 FAILED', 's-err');
+  }
+
+  // auto-fill status/refund IDs
+  document.getElementById('s-id').value = paymentId;
+  document.getElementById('rf-id').value = paymentId;
+
+  hideSteps('charge');
+  setBody('body-charge', response);
+  showFooter('charge', elapsed);
+  setBtnLoading('charge', false);
+  document.getElementById('btn-charge').innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send Request';
+}
+
+// ─── STATUS ────────────────────────────────────────────────────────────────
+async function runStatus() {
+  const t0 = Date.now();
+  const id = document.getElementById('s-id').value.trim() || uid('npay_ch');
+  setBtnLoading('status', true);
+  setPill('status', 'FETCHING', 's-proc');
+  showSteps('status');
+  document.getElementById('body-status').innerHTML = '<span class="ph">// Fetching...</span>';
+  document.getElementById('foot-status').classList.remove('visible');
+
+  document.getElementById('ss1').classList.add('show'); document.getElementById('sd1').className = 'step-dot dot-spin';
+  await sleep(rand(300,500)); document.getElementById('sd1').className = 'step-dot dot-done';
+  document.getElementById('ss2').classList.add('show'); document.getElementById('sd2').className = 'step-dot dot-spin';
+  await sleep(rand(350,550)); document.getElementById('sd2').className = 'step-dot dot-done';
+  document.getElementById('ss3').classList.add('show'); document.getElementById('sd3').className = 'step-dot dot-spin';
+  await sleep(rand(300,500)); document.getElementById('sd3').className = 'step-dot dot-done';
+
+  const response = {
+    object: "payment",
+    id: id,
+    status: "successful",
+    amount: 250.00,
+    currency: document.getElementById('c-currency').value,
+    provider: document.getElementById('c-provider').value,
+    provider_name: providerNames[document.getElementById('c-provider').value],
+    phone: document.getElementById('c-phone').value || "260960000001",
+    transaction_id: uid('TXN'),
+    provider_tx_ref: uid('MTN'),
+    fee: 3.75,
+    net_amount: 246.25,
+    created_at: new Date(Date.now() - 60000).toISOString(),
+    completed_at: ts(),
+    livemode: false
+  };
+
+  hideSteps('status');
+  setBody('body-status', response);
+  setPill('status', '200 OK', 's-ok');
+  showFooter('status', Date.now() - t0);
+  setBtnLoading('status', false);
+  document.getElementById('btn-status').innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Check Status';
+}
+
+// ─── PAYOUT ────────────────────────────────────────────────────────────────
+async function runPayout() {
+  const t0 = Date.now();
+  const amount   = Number(document.getElementById('p-amount').value);
+  const currency = document.getElementById('p-currency').value;
+  const provider = document.getElementById('p-provider').value;
+  const phone    = document.getElementById('p-phone').value.trim();
+
+  setBtnLoading('payout', true);
+  setPill('payout', 'PROCESSING', 's-proc');
+  showSteps('payout');
+  document.getElementById('body-payout').innerHTML = '<span class="ph">// Processing...</span>';
+  document.getElementById('foot-payout').classList.remove('visible');
+
+  document.getElementById('ps1').classList.add('show'); document.getElementById('pd1').className = 'step-dot dot-spin';
+  await sleep(rand(300,500)); document.getElementById('pd1').className = 'step-dot dot-done';
+  document.getElementById('ps2').classList.add('show'); document.getElementById('pd2').className = 'step-dot dot-spin';
+  await sleep(rand(400,650)); document.getElementById('pd2').className = 'step-dot dot-done';
+  document.getElementById('ps3').classList.add('show'); document.getElementById('pd3').className = 'step-dot dot-spin';
+  await sleep(rand(600,900)); document.getElementById('pd3').className = 'step-dot dot-done';
+
+  const response = {
+    object: "payout",
+    id: uid('npay_po'),
+    status: "successful",
+    amount: amount,
+    amount_formatted: currencySymbols[currency] + amount.toFixed(2),
+    currency: currency,
+    provider: provider,
+    provider_name: providerNames[provider],
+    recipient_phone: phone,
+    fee: parseFloat((amount * 0.01).toFixed(2)),
+    net_disbursed: parseFloat((amount * 0.99).toFixed(2)),
+    transaction_id: uid('TXN'),
+    provider_ref: uid(provider.toUpperCase()),
+    narration: "NexaPay Payout",
+    created_at: ts(),
+    settled_at: ts(),
+    livemode: false
+  };
+
+  hideSteps('payout');
+  setBody('body-payout', response);
+  setPill('payout', '200 OK', 's-ok');
+  showFooter('payout', Date.now() - t0);
+  setBtnLoading('payout', false);
+  document.getElementById('btn-payout').innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send Payout';
+}
+
+// ─── REFUND ────────────────────────────────────────────────────────────────
+async function runRefund() {
+  const t0 = Date.now();
+  const payId = document.getElementById('rf-id').value.trim() || uid('npay_ch');
+  const amt   = Number(document.getElementById('rf-amt').value) || 250;
+  const currency = document.getElementById('c-currency').value;
+
+  setBtnLoading('refund', true);
+  setPill('refund', 'PROCESSING', 's-proc');
+  showSteps('refund');
+  document.getElementById('body-refund').innerHTML = '<span class="ph">// Processing...</span>';
+  document.getElementById('foot-refund').classList.remove('visible');
+
+  document.getElementById('rfs1').classList.add('show'); document.getElementById('rfd1').className = 'step-dot dot-spin';
+  await sleep(rand(300,500)); document.getElementById('rfd1').className = 'step-dot dot-done';
+  document.getElementById('rfs2').classList.add('show'); document.getElementById('rfd2').className = 'step-dot dot-spin';
+  await sleep(rand(450,700)); document.getElementById('rfd2').className = 'step-dot dot-done';
+  document.getElementById('rfs3').classList.add('show'); document.getElementById('rfd3').className = 'step-dot dot-spin';
+  await sleep(rand(500,800)); document.getElementById('rfd3').className = 'step-dot dot-done';
+
+  const response = {
+    object: "refund",
+    id: uid('npay_rf'),
+    payment_id: payId,
+    status: "successful",
+    refund_type: document.getElementById('rf-amt').value ? "partial" : "full",
+    amount: amt,
+    amount_formatted: currencySymbols[currency] + amt.toFixed(2),
+    currency: currency,
+    reason: "Customer requested",
+    credited_to_phone: document.getElementById('c-phone').value || "260960000001",
+    transaction_id: uid('TXN'),
+    created_at: ts(),
+    completed_at: ts(),
+    livemode: false
+  };
+
+  hideSteps('refund');
+  setBody('body-refund', response);
+  setPill('refund', '200 OK', 's-ok');
+  showFooter('refund', Date.now() - t0);
+  setBtnLoading('refund', false);
+  document.getElementById('btn-refund').innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Issue Refund';
+}
+
+// ─── BALANCE ───────────────────────────────────────────────────────────────
+async function runBalance() {
+  const t0 = Date.now();
+  setBtnLoading('balance', true);
+  setPill('balance', 'FETCHING', 's-proc');
+  showSteps('balance');
+  document.getElementById('body-balance').innerHTML = '<span class="ph">// Fetching...</span>';
+  document.getElementById('foot-balance').classList.remove('visible');
+
+  document.getElementById('bs1').classList.add('show'); document.getElementById('bd1').className = 'step-dot dot-spin';
+  await sleep(rand(300,500)); document.getElementById('bd1').className = 'step-dot dot-done';
+  document.getElementById('bs2').classList.add('show'); document.getElementById('bd2').className = 'step-dot dot-spin';
+  await sleep(rand(400,600)); document.getElementById('bd2').className = 'step-dot dot-done';
+
+  const response = {
+    object: "balance",
+    account_id: "acct_elicate_sandbox_001",
+    environment: "sandbox",
+    balances: [
+      { currency: "ZMW", available: 48250.00, pending: 3200.00, symbol: "K", country: "Zambia" },
+      { currency: "ZWL", available: 125000.00, pending: 8400.00, symbol: "$", country: "Zimbabwe" },
+      { currency: "BWP", available: 9800.00, pending: 1200.00, symbol: "P", country: "Botswana" },
+      { currency: "NAD", available: 22100.00, pending: 5600.00, symbol: "N$", country: "Namibia" }
+    ],
+    as_at: ts(),
+    livemode: false,
+    note: "Sandbox balances are simulated and reset daily"
+  };
+
+  hideSteps('balance');
+  setBody('body-balance', response);
+  setPill('balance', '200 OK', 's-ok');
+  showFooter('balance', Date.now() - t0);
+  setBtnLoading('balance', false);
+  document.getElementById('btn-balance').innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Get Balance';
+}
+
+// ─── UI HELPERS ────────────────────────────────────────────────────────────
+function useNumber(num) {
+  ['c-phone','p-phone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = num;
+  });
+}
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+function toggleDrawer() {
+  const d=document.getElementById('drawer'),o=document.getElementById('overlay'),h=document.getElementById('hamburger');
+  d.classList.toggle('open'); o.classList.toggle('visible'); h.classList.toggle('open');
+  document.body.style.overflow = d.classList.contains('open') ? 'hidden' : '';
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('visible');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow = '';
+}
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+(function() {
+  var btn = document.getElementById('dark-toggle');
+  if (!btn) return;
+  if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+  btn.addEventListener('click', function() {
+    var isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+})();
+</script>
+<script src="sw-transitions.js" onerror="void 0"></script>
+</body>
+</html>

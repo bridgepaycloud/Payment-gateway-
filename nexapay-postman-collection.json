@@ -1,0 +1,165 @@
+{
+  "info": {
+    "name": "NexaPay API",
+    "description": "NexaPay — Mobile Money Payment Gateway for Southern Africa (Zambia, Zimbabwe, Botswana, Namibia). Built by Elicate Technologies Limited.\n\n## Getting Started\n1. Set your `api_key` variable (use `npay_test_demo_key_123` for sandbox)\n2. Set `base_url` to `https://payment-gateway-server-database.onrender.com` for sandbox\n3. Use test phone numbers in the Collection Variables to simulate different outcomes\n\n## Test Phone Numbers\n- `260960000001` → Success\n- `260960000002` → Declined\n- `260960000003` → Timeout\n- `260960000004` → Insufficient Funds",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "nexapay-elicate"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://payment-gateway-server-database.onrender.com", "type": "string" },
+    { "key": "api_key", "value": "npay_test_demo_key_123", "type": "string" },
+    { "key": "payment_id", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{api_key}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "API Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/health",
+            "description": "Check if the API is live and healthy."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sandbox — Payments",
+      "item": [
+        {
+          "name": "Charge a Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.payment_id) {",
+                  "  pm.collectionVariables.set('payment_id', json.payment_id);",
+                  "  console.log('Saved payment_id:', json.payment_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/sandbox/v2/payments/charge",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100,\n  \"currency\": \"ZMW\",\n  \"phone\": \"260960000001\",\n  \"provider\": \"mtn\",\n  \"reference\": \"ORDER-001\",\n  \"description\": \"Test payment via Postman\"\n}"
+            },
+            "description": "Initiate a mobile money payment.\n\n**Test phone numbers:**\n- `260960000001` → Success\n- `260960000002` → Declined\n- `260960000003` → Timeout\n- `260960000004` → Insufficient Funds\n\nThe payment ID is automatically saved to `{{payment_id}}` for use in other requests."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment Status",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/sandbox/v2/payments/{{payment_id}}",
+            "description": "Check the status of a specific payment using its ID. The `payment_id` variable is set automatically after a successful Charge request."
+          },
+          "response": []
+        },
+        {
+          "name": "Refund a Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/sandbox/v2/payments/{{payment_id}}/refunds",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50,\n  \"reason\": \"Customer requested refund\"\n}"
+            },
+            "description": "Refund a payment fully or partially. Omit `amount` for a full refund."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sandbox — Payouts",
+      "item": [
+        {
+          "name": "Send a Payout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/sandbox/v2/payouts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50,\n  \"currency\": \"ZMW\",\n  \"phone\": \"260960000001\",\n  \"provider\": \"mtn\",\n  \"description\": \"Merchant payout\"\n}"
+            },
+            "description": "Send money to a mobile wallet (payout / disbursement)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sandbox — Webhooks",
+      "item": [
+        {
+          "name": "Register Webhook",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/sandbox/v2/webhooks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://your-server.com/webhook\",\n  \"events\": [\"payment.success\", \"payment.failed\", \"payout.success\"]\n}"
+            },
+            "description": "Register a webhook endpoint to receive payment events."
+          },
+          "response": []
+        },
+        {
+          "name": "Send Test Webhook",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/sandbox/v2/webhooks/test",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://your-server.com/webhook\",\n  \"event\": \"payment.success\"\n}"
+            },
+            "description": "Send a test webhook event to your endpoint to verify it's working."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sandbox — Account",
+      "item": [
+        {
+          "name": "Get Sandbox Balance",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/sandbox/v2/balance",
+            "description": "Get your simulated sandbox balances across all supported currencies (ZMW, ZWL, BWP, NAD)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Test Numbers",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/sandbox/v2/test-numbers",
+            "description": "Get all available sandbox test phone numbers and their expected outcomes."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 — Page Not Found | NexaPay</title>
+  <meta name="description" content="The page you're looking for doesn't exist." />
+  <link rel="icon" href="nexapay.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f4f5f9; color: #1a1f2e; line-height: 1.6; overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: column; }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; }
+
+    :root {
+      --brand: #3b5bdb; --brand-dark: #2f4ac0; --brand-light: #e8edff;
+      --accent: #748ffc; --surface: #ffffff; --bg: #f4f5f9;
+      --text: #1a1f2e; --text-muted: #6b7280; --border: #e5e7eb;
+      --shadow: 0 4px 16px rgba(0,0,0,.08); --radius: 16px;
+      --nav-h: 68px; --transition: .3s cubic-bezier(.4,0,.2,1);
+    }
+    html.dark { --surface: #1a1f2e; --bg: #0f1117; --text: #e6edf3; --text-muted: #8b949e; --border: #30363d; --brand-light: rgba(59,91,219,.22); }
+    html.dark body { background: var(--bg); color: var(--text); }
+    html.dark nav { background: rgba(15,17,23,.92); border-bottom-color: rgba(255,255,255,.07); }
+    html.dark nav.scrolled { background: rgba(15,17,23,.98); }
+    html.dark .drawer { background: #161b22; }
+    html.dark footer { background: #161b22; }
+
+    /* NAV */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: var(--nav-h); background: rgba(244,245,249,.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,.6); display: flex; align-items: center; padding: 0 1.5rem; transition: background var(--transition), box-shadow var(--transition); }
+    nav.scrolled { background: rgba(244,245,249,.97); box-shadow: 0 1px 20px rgba(0,0,0,.08); }
+    .nav-inner { width: 100%; max-width: 1140px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo-link { display: flex; align-items: center; gap: .6rem; }
+    .logo-text { font-size: 1.18rem; font-weight: 900; letter-spacing: -.7px; background: linear-gradient(135deg,#4338ca 0%,#6d28d9 55%,#a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .logo-pay-accent { font-weight: 900; font-style: italic; }
+    .logo-sub { font-size: .62rem; font-weight: 500; color: var(--text-muted); letter-spacing: .4px; text-transform: uppercase; margin-top: -2px; -webkit-text-fill-color: var(--text-muted); }
+    .nav-right { display: flex; align-items: center; gap: .4rem; }
+    .dark-toggle { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 1.5px solid var(--border); color: var(--text-muted); cursor: pointer; transition: all var(--transition); }
+    .dark-toggle:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+    .dark-toggle svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .dark-toggle .icon-sun { display: block; } .dark-toggle .icon-moon { display: none; }
+    html.dark .dark-toggle .icon-sun { display: none; } html.dark .dark-toggle .icon-moon { display: block; }
+    .hamburger { width: 38px; height: 38px; border-radius: 9px; background: var(--surface); border: 1.5px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; transition: all var(--transition); }
+    .hamburger span { display: block; width: 16px; height: 2px; background: var(--text-muted); border-radius: 2px; transition: all var(--transition); }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* DRAWER */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 999; opacity: 0; pointer-events: none; transition: opacity var(--transition); }
+    .overlay.visible { opacity: 1; pointer-events: all; }
+    .drawer { position: fixed; top: 0; right: 0; height: 100dvh; width: min(320px, 88vw); background: var(--surface); z-index: 1001; transform: translateX(100%); transition: transform var(--transition); padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { display: flex; align-items: center; justify-content: space-between; }
+    .drawer-close { width: 34px; height: 34px; border-radius: 8px; background: var(--bg); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--text-muted); cursor: pointer; }
+    .drawer-nav { list-style: none; display: flex; flex-direction: column; gap: .25rem; }
+    .drawer-nav a { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; border-radius: 10px; font-size: .93rem; font-weight: 500; color: var(--text); transition: all var(--transition); }
+    .drawer-nav a:hover { background: var(--brand-light); color: var(--brand); }
+    .nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+    .nav-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .drawer-divider { height: 1px; background: var(--border); }
+    .drawer-actions { display: flex; flex-direction: column; gap: .6rem; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .65rem 1.25rem; border-radius: 10px; font-size: .9rem; font-weight: 600; transition: all var(--transition); }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { background: var(--brand-dark); }
+    .btn-outline { border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+    .btn-full { width: 100%; }
+
+    /* 404 MAIN */
+    .page-404 { flex: 1; display: flex; align-items: center; justify-content: center; padding: calc(var(--nav-h) + 3rem) 1.5rem 4rem; }
+    .error-wrap { max-width: 560px; text-align: center; }
+    .error-graphic { position: relative; margin: 0 auto 2.5rem; width: 180px; height: 180px; }
+    .error-circle { width: 180px; height: 180px; border-radius: 50%; background: linear-gradient(135deg, #e8edff 0%, #f4f5f9 100%); display: flex; align-items: center; justify-content: center; animation: float 4s ease-in-out infinite; }
+    html.dark .error-circle { background: linear-gradient(135deg, rgba(59,91,219,.2) 0%, rgba(59,91,219,.05) 100%); }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+    .error-circle svg { width: 80px; height: 80px; stroke: var(--brand); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .error-number { font-size: clamp(5rem, 15vw, 8rem); font-weight: 900; line-height: 1; letter-spacing: -4px; background: linear-gradient(135deg,#4338ca,#6d28d9,#a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: .5rem; }
+    .error-title { font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 700; margin-bottom: .75rem; }
+    .error-desc { color: var(--text-muted); font-size: 1rem; max-width: 400px; margin: 0 auto 2rem; }
+    .error-actions { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; margin-bottom: 2.5rem; }
+    .error-actions .btn { padding: .75rem 1.6rem; font-size: .95rem; }
+    .error-links { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; justify-content: center; }
+    .error-links a { color: var(--brand); font-size: .88rem; font-weight: 500; transition: opacity var(--transition); }
+    .error-links a:hover { opacity: .7; }
+
+    /* FOOTER */
+    footer { background: #1a1f2e; color: #9ca3af; padding: 2.5rem 1.5rem 1.5rem; margin-top: auto; }
+    .footer-inner { max-width: 1140px; margin: 0 auto; }
+    .footer-bottom { text-align: center; font-size: .82rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.08); }
+    .footer-bottom span { color: var(--brand); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="index" class="logo-link">
+      <img src="nexapay.png" width="36" height="36" alt="NexaPay" style="border-radius:10px;display:block;object-fit:contain;">
+      <div>
+        <div class="logo-text">Nexa<span class="logo-pay-accent">Pay</span></div>
+        <div class="logo-sub">by Elicate Technologies</div>
+      </div>
+    </a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="dark-toggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="hamburger" id="hamburger" onclick="toggleDrawer()"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <a href="index" class="logo-link">
+      <img src="nexapay.png" width="30" height="30" alt="NexaPay" style="border-radius:9px;display:block;object-fit:contain;">
+      <span class="logo-text">Nexa<span class="logo-pay-accent">Pay</span></span>
+    </a>
+    <button class="drawer-close" onclick="closeDrawer()">&#x2715;</button>
+  </div>
+  <ul class="drawer-nav">
+    <li><a href="index"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Home</a></li>
+    <li><a href="docs"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>Documentation</a></li>
+    <li><a href="sandbox"><span class="nav-icon"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>Sandbox Tester</a></li>
+    <li><a href="about"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>About Us</a></li>
+  </ul>
+  <div class="drawer-divider"></div>
+  <div class="drawer-actions">
+    <a href="auth" class="btn btn-outline btn-full">Sign In</a>
+    <a href="auth" class="btn btn-primary btn-full">Get Started</a>
+  </div>
+</div>
+
+<main class="page-404">
+  <div class="error-wrap">
+    <div class="error-graphic">
+      <div class="error-circle">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+    </div>
+    <div class="error-number">404</div>
+    <h1 class="error-title">Page Not Found</h1>
+    <p class="error-desc">Looks like this payment route doesn't exist. The page may have been moved, deleted, or the URL might be wrong.</p>
+    <div class="error-actions">
+      <a href="index" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Back to Home
+      </a>
+      <a href="docs" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Documentation
+      </a>
+    </div>
+    <div class="error-links">
+      <a href="sandbox">Sandbox Tester</a>
+      <a href="about">About NexaPay</a>
+      <a href="blog">Blog</a>
+      <a href="mailto:support@nexapay.net">Contact Support</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-bottom">
+      &copy; 2026 <span>Elicate Technologies Limited</span>. All rights reserved. &nbsp;&middot;&nbsp; NexaPay &mdash; Mobile Payments for Southern Africa
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleDrawer() {
+    const d=document.getElementById('drawer'),o=document.getElementById('overlay'),h=document.getElementById('hamburger');
+    d.classList.toggle('open'); o.classList.toggle('visible'); h.classList.toggle('open');
+    document.body.style.overflow=d.classList.contains('open')?'hidden':'';
+  }
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('overlay').classList.remove('visible');
+    document.getElementById('hamburger').classList.remove('open');
+    document.body.style.overflow='';
+  }
+  window.addEventListener('scroll',()=>{ document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>20); },{passive:true});
+  (function(){
+    var btn=document.getElementById('dark-toggle');
+    if(!btn)return;
+    var saved=localStorage.getItem('theme');
+    if(saved==='dark') document.documentElement.classList.add('dark');
+    btn.addEventListener('click',function(){
+      var isDark=document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme',isDark?'dark':'light');
+    });
+  })();
+</script>
+<script src="sw-transitions.js" onerror="void 0"></script>
+</body>
+</html>
